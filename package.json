@@ -13,13 +13,8 @@
     "build/fik.js",
     "build/fik.min.js",
     "build/fik.module.js",
-    "src",
-    "examples/js",
-    "examples/fonts"
+    "src"
   ],
-  "directories": {
-    "example": "examples"
-  },
   "eslintConfig": {
     "extends": "mdcs"
   },

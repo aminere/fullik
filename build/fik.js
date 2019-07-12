@@ -1,8 +1,8 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.FIK = {})));
-}(this, (function (exports) { 'use strict';
+	(global = global || self, factory(global.FIK = {}));
+}(this, function (exports) { 'use strict';
 
 	// Polyfills
 
@@ -2245,8 +2245,6 @@
 
 	    clear:function(){
 
-	        this.clearAllBoneMesh();
-
 	        var i;
 
 	        i = this.numChains;
@@ -2260,14 +2258,12 @@
 
 	    },
 
-	    add:function( chain, target, meshBone ){
+	    add:function( chain, target){
 
 	        this.chains.push( chain );
 	         
 	        this.targets.push( target ); 
 	        this.numChains ++;
-
-	        if( meshBone ) this.addChainMeshs( chain );
 	    },
 
 	    
@@ -2345,139 +2341,6 @@
 	        }
 	        
 	        this.add( chain, target, meshBone );
-
-	    },
-
-
-	    // 3D THREE
-
-	    addChainMeshs:function( chain, id ){
-
-	        this.isWithMesh = true;
-
-	        var meshBone = [];
-	        var lng  = chain.bones.length;
-	        for(var i = 0; i < lng; i++ ){
-	            meshBone.push( this.addBoneMesh( chain.bones[i], i-1, meshBone, chain ));
-	        }
-
-	        this.meshChains.push( meshBone );
-
-	    },
-
-	    addBoneMesh:function( bone, prev, ar, chain ){
-
-	        var size = bone.length;
-	        var color = bone.color;
-	        var g = new THREE.CylinderBufferGeometry ( 1, 0.5, size, 4 );
-	        g.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-	        g.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, size*0.5 ) );
-	        var m = new THREE.MeshStandardMaterial({ color:color, wireframe:false, shadowSide:false });
-
-	        var m2 = new THREE.MeshBasicMaterial({ wireframe : true });
-	        //var m4 = new THREE.MeshBasicMaterial({ wireframe : true, color:color, transparent:true, opacity:0.3 });
-
-	        var extraMesh = null;
-	        var extraGeo;
-
-	        var type = bone.joint.type;
-	        switch(type){
-	            case J_BALL :
-	                m2.color.setHex(0xFF6600);
-	                var angle = bone.joint.rotor;
-	             
-	                if(angle === Math.PI) break;
-	                var s = 2;//size/4;
-	                var r = 2;//
-	                extraGeo = new THREE.CylinderBufferGeometry ( 0, r, s, 6,1, true );
-	                extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-	                extraGeo.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, s*0.5 ) );
-	                extraMesh = new THREE.Mesh( extraGeo,  m2 );
-	            break;
-	            case J_GLOBAL :
-	            var axe =  bone.joint.getHingeRotationAxis();
-	            //console.log( axe );
-	            var a1 = bone.joint.min;
-	            var a2 = bone.joint.max;
-	            var r = 2;
-	            //console.log('global', a1, a2)
-	            m2.color.setHex(0xFFFF00);
-	            extraGeo = new THREE.CircleBufferGeometry( r, 12, a1, -a1+a2 );
-	            //extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-	            if( axe.z === 1 ) extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-	            if( axe.y === 1 ) {extraGeo.applyMatrix( new THREE.Matrix4().makeRotationY( -Math.PI*0.5 ) );extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );}
-	            if( axe.x === 1 ) {  extraGeo.applyMatrix(new THREE.Matrix4().makeRotationY( Math.PI*0.5 ));}
-
-	            extraMesh = new THREE.Mesh( extraGeo,  m2 );
-	            break;
-	            case J_LOCAL :
-
-	            var axe =  bone.joint.getHingeRotationAxis();
-	            
-
-	            var r = 2;
-	            var a1 = bone.joint.min;
-	            var a2 = bone.joint.max;
-	            //console.log('local', a1, a2)
-	            m2.color.setHex(0x00FFFF);
-	            extraGeo = new THREE.CircleBufferGeometry( r, 12, a1, -a1+a2 );
-	            extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-
-	            if( axe.z === 1 ) { extraGeo.applyMatrix( new THREE.Matrix4().makeRotationY( -Math.PI*0.5 ) ); extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI*0.5 ) );}
-	            if( axe.x === 1 ) extraGeo.applyMatrix( new THREE.Matrix4().makeRotationZ( -Math.PI*0.5 ) );
-	            if( axe.y === 1 ) { extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI*0.5 ) ); extraGeo.applyMatrix(new THREE.Matrix4().makeRotationY( Math.PI*0.5 ));}
-
-	            extraMesh = new THREE.Mesh( extraGeo,  m2 );
-	            break;
-	        }
-
-	        var axe = new THREE.AxesHelper(1.5);
-	        //var bw = new THREE.Mesh( g,  m4 );
-
-	        var b = new THREE.Mesh( g,  m );
-	        b.add(axe);
-	        //b.add(bw);
-	        this.scene.add( b );
-
-	        b.castShadow = true;
-	        b.receiveShadow = true;
-
-	        if( prev !== -1 ){
-	            if( extraMesh !== null ){ 
-	                if(type!==J_GLOBAL){
-	                    extraMesh.position.z = chain.bones[prev].length;
-	                    ar[prev].add( extraMesh );
-	                } else {
-	                    b.add( extraMesh );
-	                }
-	                
-	            }
-	        } else {
-	             if( extraMesh !== null ) b.add( extraMesh );
-	        }
-	       
-	        return b;
-
-	    },
-
-	    clearAllBoneMesh:function(){
-
-	        if(!this.isWithMesh) return;
-
-	        var i, j, b;
-
-	        i = this.meshChains.length;
-	        while(i--){
-	            j = this.meshChains[i].length;
-	            while(j--){
-	                b = this.meshChains[i][j];
-	                this.scene.remove( b );
-	                b.geometry.dispose();
-	                b.material.dispose();
-	            }
-	            this.meshChains[i] = [];
-	        }
-	        this.meshChains = [];
 
 	    }
 
@@ -3480,8 +3343,6 @@
 
 	    clear: function () {
 
-	        this.clearAllBoneMesh();
-
 	        var i;
 
 	        i = this.numChains;
@@ -3495,18 +3356,14 @@
 
 	    },
 
-	    add:function ( chain, target, meshBone ) {
+	    add:function ( chain, target ) {
 
 	        this.chains.push( chain );
 	        this.numChains ++;
 
 	        //if( target.isVector3 ) target = new V2(target.x, target.y);
 	         
-	        if(target) this.targets.push( target ); 
-	        
-
-	        if( meshBone ) this.addChainMeshs( chain );
-
+	        if(target) this.targets.push( target );
 	    },
 
 	    remove:function( id ){
@@ -3578,111 +3435,7 @@
 	        
 	        this.add( chain, target, meshBone );
 
-	    },
-
-	    // 3D THREE
-
-	    addChainMeshs: function ( chain, id ) {
-
-	        this.isWithMesh = true;
-
-	        var meshBone = [];
-
-	        var lng  = chain.bones.length;
-	        for(var i = 0; i<lng; i++ ){
-	            meshBone.push( this.addBoneMesh( chain.bones[i] ) );
-	        }
-
-	        this.meshChains.push( meshBone );
-
-	    },
-
-	    addBoneMesh:function( bone ){
-
-	        var size = bone.length;
-	        var color = bone.color;
-	        //console.log(bone.color)
-	        var g = new THREE.CylinderBufferGeometry ( 1, 0.5, size, 4 );
-	       //g.applyMatrix( new THREE.Matrix4().makeTranslation( 0, size*0.5, 0 ) );
-	        g.applyMatrix( new THREE.Matrix4().makeRotationX( -_Math.pi90 ) );
-	        g.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, size*0.5 ) );
-	        //var m = new THREE.MeshStandardMaterial({ color:color });
-	        var m = new THREE.MeshStandardMaterial({ color:color, wireframe:false, shadowSide:false });
-	        //m.color.setHex( color );
-
-	        var m2 = new THREE.MeshBasicMaterial({ wireframe : true });
-
-	        var extraMesh;
-
-	        /*var type = bone.getJoint().type;
-	        switch(type){
-	            case J_BALL :
-	                m2.color.setHex(0xFF6600);
-	                var angle  = bone.getJoint().mRotorConstraintDegs;
-	                if(angle === 180) break;
-	                var s = size/4;
-	                var r = 2;//
-
-	                extraGeo = new THREE.CylinderBufferGeometry ( 0, r, s, 6 );
-	                extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) )
-	                extraGeo.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, s*0.5 ) );
-	                extraMesh = new THREE.Mesh( extraGeo,  m2 );
-	            break;
-	            case J_GLOBAL_HINGE :
-	            var a1 = bone.getJoint().mHingeClockwiseConstraintDegs * _Math.torad;
-	            var a2 = bone.getJoint().mHingeAnticlockwiseConstraintDegs * _Math.torad;
-	            var r = 2;
-	            m2.color.setHex(0xFFFF00);
-	            extraGeo = new THREE.CircleGeometry ( r, 12, a1, a1+a2 );
-	            extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-	            extraMesh = new THREE.Mesh( extraGeo,  m2 );
-	            break;
-	            case J_LOCAL_HINGE :
-	            var r = 2;
-	            var a1 = bone.getJoint().mHingeClockwiseConstraintDegs * _Math.torad;
-	            var a2 = bone.getJoint().mHingeAnticlockwiseConstraintDegs * _Math.torad;
-	            m2.color.setHex(0x00FFFF);
-	            extraGeo = new THREE.CircleGeometry ( r, 12, a1, a1+a2 );
-	            extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-	            extraMesh = new THREE.Mesh( extraGeo,  m2 );
-	            break;
-	        }*/
-
-
-
-
-	        var b = new THREE.Mesh( g,  m );
-
-	        b.castShadow = true;
-	        b.receiveShadow = true;
-	        
-	        this.scene.add( b );
-	        if( extraMesh ) b.add( extraMesh );
-	        return b;
-
-	    },
-
-	    clearAllBoneMesh:function(){
-
-	        if(!this.isWithMesh) return;
-
-	        var i, j, b;
-
-	        i = this.meshChains.length;
-	        while(i--){
-	            j = this.meshChains[i].length;
-	            while(j--){
-	                b = this.meshChains[i][j];
-	                this.scene.remove( b );
-	                b.geometry.dispose();
-	                b.material.dispose();
-	            }
-	            this.meshChains[i] = [];
-	        }
-	        this.meshChains = [];
-
 	    }
-
 	} );
 
 	//import { NONE, GLOBAL_ROTOR, GLOBAL_HINGE, LOCAL_ROTOR, LOCAL_HINGE, J_BALL, J_GLOBAL, J_LOCAL } from '../constants.js';
@@ -3858,51 +3611,51 @@
 
 	} );
 
-	exports._Math = _Math;
-	exports.V2 = V2;
-	exports.V3 = V3;
-	exports.M3 = M3;
-	exports.Joint3D = Joint3D;
-	exports.Bone3D = Bone3D;
-	exports.Chain3D = Chain3D;
-	exports.Structure3D = Structure3D;
-	exports.Joint2D = Joint2D;
 	exports.Bone2D = Bone2D;
+	exports.Bone3D = Bone3D;
 	exports.Chain2D = Chain2D;
-	exports.Structure2D = Structure2D;
-	exports.IKSolver = IKSolver;
+	exports.Chain3D = Chain3D;
+	exports.DOWN = DOWN;
+	exports.END = END;
+	exports.GLOBAL_ABSOLUTE = GLOBAL_ABSOLUTE;
+	exports.GLOBAL_HINGE = GLOBAL_HINGE;
+	exports.GLOBAL_ROTOR = GLOBAL_ROTOR;
 	exports.HISolver = HISolver;
-	exports.REVISION = REVISION;
+	exports.IKSolver = IKSolver;
+	exports.J_BALL = J_BALL;
+	exports.J_GLOBAL = J_GLOBAL;
+	exports.J_LOCAL = J_LOCAL;
+	exports.Joint2D = Joint2D;
+	exports.Joint3D = Joint3D;
+	exports.LEFT = LEFT;
+	exports.LOCAL_ABSOLUTE = LOCAL_ABSOLUTE;
+	exports.LOCAL_HINGE = LOCAL_HINGE;
+	exports.LOCAL_RELATIVE = LOCAL_RELATIVE;
+	exports.LOCAL_ROTOR = LOCAL_ROTOR;
+	exports.M3 = M3;
+	exports.MAX_VALUE = MAX_VALUE;
+	exports.NONE = NONE;
+	exports.PI = PI;
 	exports.PRECISION = PRECISION;
 	exports.PRECISION_DEG = PRECISION_DEG;
-	exports.MAX_VALUE = MAX_VALUE;
-	exports.PI = PI;
-	exports.TORAD = TORAD;
-	exports.TODEG = TODEG;
-	exports.NONE = NONE;
-	exports.GLOBAL_ROTOR = GLOBAL_ROTOR;
-	exports.GLOBAL_HINGE = GLOBAL_HINGE;
-	exports.LOCAL_ROTOR = LOCAL_ROTOR;
-	exports.LOCAL_HINGE = LOCAL_HINGE;
-	exports.GLOBAL_ABSOLUTE = GLOBAL_ABSOLUTE;
-	exports.LOCAL_RELATIVE = LOCAL_RELATIVE;
-	exports.LOCAL_ABSOLUTE = LOCAL_ABSOLUTE;
-	exports.J_BALL = J_BALL;
-	exports.J_LOCAL = J_LOCAL;
-	exports.J_GLOBAL = J_GLOBAL;
-	exports.START = START;
-	exports.END = END;
-	exports.X_AXE = X_AXE;
-	exports.Y_AXE = Y_AXE;
-	exports.Z_AXE = Z_AXE;
-	exports.X_NEG = X_NEG;
-	exports.Y_NEG = Y_NEG;
-	exports.Z_NEG = Z_NEG;
-	exports.UP = UP;
-	exports.DOWN = DOWN;
-	exports.LEFT = LEFT;
+	exports.REVISION = REVISION;
 	exports.RIGHT = RIGHT;
+	exports.START = START;
+	exports.Structure2D = Structure2D;
+	exports.Structure3D = Structure3D;
+	exports.TODEG = TODEG;
+	exports.TORAD = TORAD;
+	exports.UP = UP;
+	exports.V2 = V2;
+	exports.V3 = V3;
+	exports.X_AXE = X_AXE;
+	exports.X_NEG = X_NEG;
+	exports.Y_AXE = Y_AXE;
+	exports.Y_NEG = Y_NEG;
+	exports.Z_AXE = Z_AXE;
+	exports.Z_NEG = Z_NEG;
+	exports._Math = _Math;
 
 	Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));

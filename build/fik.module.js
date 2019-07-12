@@ -2239,8 +2239,6 @@ Object.assign( Structure3D.prototype, {
 
     clear:function(){
 
-        this.clearAllBoneMesh();
-
         var i;
 
         i = this.numChains;
@@ -2254,14 +2252,12 @@ Object.assign( Structure3D.prototype, {
 
     },
 
-    add:function( chain, target, meshBone ){
+    add:function( chain, target){
 
         this.chains.push( chain );
          
         this.targets.push( target ); 
         this.numChains ++;
-
-        if( meshBone ) this.addChainMeshs( chain );
     },
 
     
@@ -2339,139 +2335,6 @@ Object.assign( Structure3D.prototype, {
         }
         
         this.add( chain, target, meshBone );
-
-    },
-
-
-    // 3D THREE
-
-    addChainMeshs:function( chain, id ){
-
-        this.isWithMesh = true;
-
-        var meshBone = [];
-        var lng  = chain.bones.length;
-        for(var i = 0; i < lng; i++ ){
-            meshBone.push( this.addBoneMesh( chain.bones[i], i-1, meshBone, chain ));
-        }
-
-        this.meshChains.push( meshBone );
-
-    },
-
-    addBoneMesh:function( bone, prev, ar, chain ){
-
-        var size = bone.length;
-        var color = bone.color;
-        var g = new THREE.CylinderBufferGeometry ( 1, 0.5, size, 4 );
-        g.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-        g.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, size*0.5 ) );
-        var m = new THREE.MeshStandardMaterial({ color:color, wireframe:false, shadowSide:false });
-
-        var m2 = new THREE.MeshBasicMaterial({ wireframe : true });
-        //var m4 = new THREE.MeshBasicMaterial({ wireframe : true, color:color, transparent:true, opacity:0.3 });
-
-        var extraMesh = null;
-        var extraGeo;
-
-        var type = bone.joint.type;
-        switch(type){
-            case J_BALL :
-                m2.color.setHex(0xFF6600);
-                var angle = bone.joint.rotor;
-             
-                if(angle === Math.PI) break;
-                var s = 2;//size/4;
-                var r = 2;//
-                extraGeo = new THREE.CylinderBufferGeometry ( 0, r, s, 6,1, true );
-                extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-                extraGeo.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, s*0.5 ) );
-                extraMesh = new THREE.Mesh( extraGeo,  m2 );
-            break;
-            case J_GLOBAL :
-            var axe =  bone.joint.getHingeRotationAxis();
-            //console.log( axe );
-            var a1 = bone.joint.min;
-            var a2 = bone.joint.max;
-            var r = 2;
-            //console.log('global', a1, a2)
-            m2.color.setHex(0xFFFF00);
-            extraGeo = new THREE.CircleBufferGeometry( r, 12, a1, -a1+a2 );
-            //extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-            if( axe.z === 1 ) extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-            if( axe.y === 1 ) {extraGeo.applyMatrix( new THREE.Matrix4().makeRotationY( -Math.PI*0.5 ) );extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );}
-            if( axe.x === 1 ) {  extraGeo.applyMatrix(new THREE.Matrix4().makeRotationY( Math.PI*0.5 ));}
-
-            extraMesh = new THREE.Mesh( extraGeo,  m2 );
-            break;
-            case J_LOCAL :
-
-            var axe =  bone.joint.getHingeRotationAxis();
-            
-
-            var r = 2;
-            var a1 = bone.joint.min;
-            var a2 = bone.joint.max;
-            //console.log('local', a1, a2)
-            m2.color.setHex(0x00FFFF);
-            extraGeo = new THREE.CircleBufferGeometry( r, 12, a1, -a1+a2 );
-            extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-
-            if( axe.z === 1 ) { extraGeo.applyMatrix( new THREE.Matrix4().makeRotationY( -Math.PI*0.5 ) ); extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI*0.5 ) );}
-            if( axe.x === 1 ) extraGeo.applyMatrix( new THREE.Matrix4().makeRotationZ( -Math.PI*0.5 ) );
-            if( axe.y === 1 ) { extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( Math.PI*0.5 ) ); extraGeo.applyMatrix(new THREE.Matrix4().makeRotationY( Math.PI*0.5 ));}
-
-            extraMesh = new THREE.Mesh( extraGeo,  m2 );
-            break;
-        }
-
-        var axe = new THREE.AxesHelper(1.5);
-        //var bw = new THREE.Mesh( g,  m4 );
-
-        var b = new THREE.Mesh( g,  m );
-        b.add(axe);
-        //b.add(bw);
-        this.scene.add( b );
-
-        b.castShadow = true;
-        b.receiveShadow = true;
-
-        if( prev !== -1 ){
-            if( extraMesh !== null ){ 
-                if(type!==J_GLOBAL){
-                    extraMesh.position.z = chain.bones[prev].length;
-                    ar[prev].add( extraMesh );
-                } else {
-                    b.add( extraMesh );
-                }
-                
-            }
-        } else {
-             if( extraMesh !== null ) b.add( extraMesh );
-        }
-       
-        return b;
-
-    },
-
-    clearAllBoneMesh:function(){
-
-        if(!this.isWithMesh) return;
-
-        var i, j, b;
-
-        i = this.meshChains.length;
-        while(i--){
-            j = this.meshChains[i].length;
-            while(j--){
-                b = this.meshChains[i][j];
-                this.scene.remove( b );
-                b.geometry.dispose();
-                b.material.dispose();
-            }
-            this.meshChains[i] = [];
-        }
-        this.meshChains = [];
 
     }
 
@@ -3474,8 +3337,6 @@ Object.assign( Structure2D.prototype, {
 
     clear: function () {
 
-        this.clearAllBoneMesh();
-
         var i;
 
         i = this.numChains;
@@ -3489,18 +3350,14 @@ Object.assign( Structure2D.prototype, {
 
     },
 
-    add:function ( chain, target, meshBone ) {
+    add:function ( chain, target ) {
 
         this.chains.push( chain );
         this.numChains ++;
 
         //if( target.isVector3 ) target = new V2(target.x, target.y);
          
-        if(target) this.targets.push( target ); 
-        
-
-        if( meshBone ) this.addChainMeshs( chain );
-
+        if(target) this.targets.push( target );
     },
 
     remove:function( id ){
@@ -3572,111 +3429,7 @@ Object.assign( Structure2D.prototype, {
         
         this.add( chain, target, meshBone );
 
-    },
-
-    // 3D THREE
-
-    addChainMeshs: function ( chain, id ) {
-
-        this.isWithMesh = true;
-
-        var meshBone = [];
-
-        var lng  = chain.bones.length;
-        for(var i = 0; i<lng; i++ ){
-            meshBone.push( this.addBoneMesh( chain.bones[i] ) );
-        }
-
-        this.meshChains.push( meshBone );
-
-    },
-
-    addBoneMesh:function( bone ){
-
-        var size = bone.length;
-        var color = bone.color;
-        //console.log(bone.color)
-        var g = new THREE.CylinderBufferGeometry ( 1, 0.5, size, 4 );
-       //g.applyMatrix( new THREE.Matrix4().makeTranslation( 0, size*0.5, 0 ) );
-        g.applyMatrix( new THREE.Matrix4().makeRotationX( -_Math.pi90 ) );
-        g.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, size*0.5 ) );
-        //var m = new THREE.MeshStandardMaterial({ color:color });
-        var m = new THREE.MeshStandardMaterial({ color:color, wireframe:false, shadowSide:false });
-        //m.color.setHex( color );
-
-        var m2 = new THREE.MeshBasicMaterial({ wireframe : true });
-
-        var extraMesh;
-
-        /*var type = bone.getJoint().type;
-        switch(type){
-            case J_BALL :
-                m2.color.setHex(0xFF6600);
-                var angle  = bone.getJoint().mRotorConstraintDegs;
-                if(angle === 180) break;
-                var s = size/4;
-                var r = 2;//
-
-                extraGeo = new THREE.CylinderBufferGeometry ( 0, r, s, 6 );
-                extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) )
-                extraGeo.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, s*0.5 ) );
-                extraMesh = new THREE.Mesh( extraGeo,  m2 );
-            break;
-            case J_GLOBAL_HINGE :
-            var a1 = bone.getJoint().mHingeClockwiseConstraintDegs * _Math.torad;
-            var a2 = bone.getJoint().mHingeAnticlockwiseConstraintDegs * _Math.torad;
-            var r = 2;
-            m2.color.setHex(0xFFFF00);
-            extraGeo = new THREE.CircleGeometry ( r, 12, a1, a1+a2 );
-            extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-            extraMesh = new THREE.Mesh( extraGeo,  m2 );
-            break;
-            case J_LOCAL_HINGE :
-            var r = 2;
-            var a1 = bone.getJoint().mHingeClockwiseConstraintDegs * _Math.torad;
-            var a2 = bone.getJoint().mHingeAnticlockwiseConstraintDegs * _Math.torad;
-            m2.color.setHex(0x00FFFF);
-            extraGeo = new THREE.CircleGeometry ( r, 12, a1, a1+a2 );
-            extraGeo.applyMatrix( new THREE.Matrix4().makeRotationX( -Math.PI*0.5 ) );
-            extraMesh = new THREE.Mesh( extraGeo,  m2 );
-            break;
-        }*/
-
-
-
-
-        var b = new THREE.Mesh( g,  m );
-
-        b.castShadow = true;
-        b.receiveShadow = true;
-        
-        this.scene.add( b );
-        if( extraMesh ) b.add( extraMesh );
-        return b;
-
-    },
-
-    clearAllBoneMesh:function(){
-
-        if(!this.isWithMesh) return;
-
-        var i, j, b;
-
-        i = this.meshChains.length;
-        while(i--){
-            j = this.meshChains[i].length;
-            while(j--){
-                b = this.meshChains[i][j];
-                this.scene.remove( b );
-                b.geometry.dispose();
-                b.material.dispose();
-            }
-            this.meshChains[i] = [];
-        }
-        this.meshChains = [];
-
     }
-
 } );
 
 //import { NONE, GLOBAL_ROTOR, GLOBAL_HINGE, LOCAL_ROTOR, LOCAL_HINGE, J_BALL, J_GLOBAL, J_LOCAL } from '../constants.js';
@@ -3852,4 +3605,4 @@ Object.assign( HISolver.prototype, {
 
 } );
 
-export { _Math, V2, V3, M3, Joint3D, Bone3D, Chain3D, Structure3D, Joint2D, Bone2D, Chain2D, Structure2D, IKSolver, HISolver, REVISION, PRECISION, PRECISION_DEG, MAX_VALUE, PI, TORAD, TODEG, NONE, GLOBAL_ROTOR, GLOBAL_HINGE, LOCAL_ROTOR, LOCAL_HINGE, GLOBAL_ABSOLUTE, LOCAL_RELATIVE, LOCAL_ABSOLUTE, J_BALL, J_LOCAL, J_GLOBAL, START, END, X_AXE, Y_AXE, Z_AXE, X_NEG, Y_NEG, Z_NEG, UP, DOWN, LEFT, RIGHT };
+export { Bone2D, Bone3D, Chain2D, Chain3D, DOWN, END, GLOBAL_ABSOLUTE, GLOBAL_HINGE, GLOBAL_ROTOR, HISolver, IKSolver, J_BALL, J_GLOBAL, J_LOCAL, Joint2D, Joint3D, LEFT, LOCAL_ABSOLUTE, LOCAL_HINGE, LOCAL_RELATIVE, LOCAL_ROTOR, M3, MAX_VALUE, NONE, PI, PRECISION, PRECISION_DEG, REVISION, RIGHT, START, Structure2D, Structure3D, TODEG, TORAD, UP, V2, V3, X_AXE, X_NEG, Y_AXE, Y_NEG, Z_AXE, Z_NEG, _Math };
