@@ -2134,23 +2134,19 @@ function Structure3D ( scene ) {
     this.fixedBaseMode = true;
 
     this.chains = [];
-    this.meshChains = [];
     this.targets = [];
     this.numChains = 0;
 
     this.scene = scene || null;
 
     this.tmpMtx = new FIK.M3();
-
-    this.isWithMesh = false;
-
 }
 
 Object.assign( Structure3D.prototype, {
 
     update:function(){
 
-        var chain, mesh, bone, target;
+        var chain, target;
         var hostChainNumber;
         var hostBone, constraintType;
 
@@ -2215,24 +2211,8 @@ Object.assign( Structure3D.prototype, {
             }
 
             // Finally, update the target and solve the chain
-
             if ( !chain.useEmbeddedTarget ) chain.solveForTarget( target );
             else chain.solveForEmbeddedTarget();
-
-            // update 3d mesh
-
-            if( this.isWithMesh ){
-
-                mesh = this.meshChains[i];
-
-                for ( var j = 0; j < chain.numBones; j++ ) {
-                    bone = chain.bones[j];
-                    mesh[j].position.copy( bone.start );
-                    mesh[j].lookAt( bone.end );
-                }
-
-            }
-
         }
 
     },
@@ -2247,7 +2227,6 @@ Object.assign( Structure3D.prototype, {
         }
 
         this.chains = [];
-        this.meshChains = [];
         this.targets = [];
 
     },
@@ -2266,7 +2245,6 @@ Object.assign( Structure3D.prototype, {
 
         this.chains[id].clear();
         this.chains.splice(id, 1);
-        this.meshChains.splice(id, 1);
         this.targets.splice(id, 1);
         this.numChains --;
 
@@ -3225,13 +3203,10 @@ function Structure2D ( scene ) {
     this.fixedBaseMode = true;
 
     this.chains = [];
-    this.meshChains = [];
     this.targets = [];
     this.numChains = 0;
 
     this.scene = scene || null;
-
-    this.isWithMesh = false;
 
 }
 
@@ -3243,7 +3218,7 @@ Object.assign( Structure2D.prototype, {
 
         //console.log('up')
 
-        var chain, mesh, bone, target, tmp = new THREE.Vector3();
+        var chain, target, tmp = new THREE.Vector3();
         var hostChainNumber;
         var hostBone, constraintType;
 
@@ -3301,23 +3276,6 @@ Object.assign( Structure2D.prototype, {
 
             if ( !chain.useEmbeddedTarget ) chain.solveForTarget( target );
             else console.log('embed', chain.solveForEmbeddedTarget());
-
-
-            // update 3d mesh
-
-            if( this.isWithMesh ){
-
-                mesh = this.meshChains[i];
-
-                for ( var j = 0; j < chain.numBones; j++ ) {
-                    bone = chain.bones[j];
-                    mesh[j].position.set( bone.start.x, bone.start.y, 0 );
-                    mesh[j].lookAt( tmp.set( bone.end.x, bone.end.y, 0 ) );
-                }
-
-            }
-
-
         }
 
     },
@@ -3345,7 +3303,6 @@ Object.assign( Structure2D.prototype, {
         }
 
         this.chains = [];
-        this.meshChains = [];
         this.targets = [];
 
     },
@@ -3364,7 +3321,6 @@ Object.assign( Structure2D.prototype, {
 
         this.chains[id].clear();
         this.chains.splice(id, 1);
-        this.meshChains.splice(id, 1);
         this.targets.splice(id, 1);
         this.numChains --;
 

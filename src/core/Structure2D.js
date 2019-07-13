@@ -8,13 +8,10 @@ function Structure2D ( scene ) {
     this.fixedBaseMode = true;
 
     this.chains = [];
-    this.meshChains = [];
     this.targets = [];
     this.numChains = 0;
 
     this.scene = scene || null;
-
-    this.isWithMesh = false;
 
 }
 
@@ -84,23 +81,6 @@ Object.assign( Structure2D.prototype, {
 
             if ( !chain.useEmbeddedTarget ) chain.solveForTarget( target );
             else console.log('embed', chain.solveForEmbeddedTarget());
-
-
-            // update 3d mesh
-
-            if( this.isWithMesh ){
-
-                mesh = this.meshChains[i];
-
-                for ( var j = 0; j < chain.numBones; j++ ) {
-                    bone = chain.bones[j];
-                    mesh[j].position.set( bone.start.x, bone.start.y, 0 );
-                    mesh[j].lookAt( tmp.set( bone.end.x, bone.end.y, 0 ) );
-                }
-
-            }
-
-
         }
 
     },
@@ -128,7 +108,6 @@ Object.assign( Structure2D.prototype, {
         }
 
         this.chains = [];
-        this.meshChains = [];
         this.targets = [];
 
     },
@@ -147,7 +126,6 @@ Object.assign( Structure2D.prototype, {
 
         this.chains[id].clear();
         this.chains.splice(id, 1);
-        this.meshChains.splice(id, 1);
         this.targets.splice(id, 1);
         this.numChains --;
 
