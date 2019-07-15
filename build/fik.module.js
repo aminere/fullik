@@ -2129,15 +2129,13 @@ Object.assign( Chain3D.prototype, {
 
 } );
 
-function Structure3D ( scene ) {
+function Structure3D () {
 
     this.fixedBaseMode = true;
 
     this.chains = [];
     this.targets = [];
     this.numChains = 0;
-
-    this.scene = scene || null;
 
     this.tmpMtx = new FIK.M3();
 }
@@ -3198,16 +3196,13 @@ Object.assign( Chain2D.prototype, {
 
 } );
 
-function Structure2D ( scene ) {
+function Structure2D () {
 
     this.fixedBaseMode = true;
 
     this.chains = [];
     this.targets = [];
     this.numChains = 0;
-
-    this.scene = scene || null;
-
 }
 
 Object.assign( Structure2D.prototype, {

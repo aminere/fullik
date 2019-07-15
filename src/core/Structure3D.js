@@ -1,15 +1,13 @@
 import { NONE, GLOBAL_ROTOR, GLOBAL_HINGE, LOCAL_ROTOR, LOCAL_HINGE, J_BALL, J_GLOBAL, J_LOCAL, END, START } from '../constants.js';
 import { _Math } from '../math/Math.js';
 
-function Structure3D ( scene ) {
+function Structure3D () {
 
     this.fixedBaseMode = true;
 
     this.chains = [];
     this.targets = [];
     this.numChains = 0;
-
-    this.scene = scene || null;
 
     this.tmpMtx = new FIK.M3();
 }

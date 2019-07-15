@@ -3,16 +3,13 @@ import { _Math } from '../math/Math.js';
 import { V2 } from '../math/V2.js';
 import { Tools } from './Tools.js';
 
-function Structure2D ( scene ) {
+function Structure2D () {
 
     this.fixedBaseMode = true;
 
     this.chains = [];
     this.targets = [];
     this.numChains = 0;
-
-    this.scene = scene || null;
-
 }
 
 Object.assign( Structure2D.prototype, {
