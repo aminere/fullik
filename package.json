@@ -1,7 +1,7 @@
 {
-  "name": "fullik",
+  "name": "@aminere/fullik",
   "version": "1.3.3",
-  "description": "JavaScript 3D library",
+  "description": "Fork of Fullik used by spider-engine",
   "main": "build/fik.js",
   "repository": "lo-th/Fullik",
   "jsnext:main": "build/fik.module.js",
